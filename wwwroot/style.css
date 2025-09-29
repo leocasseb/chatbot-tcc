@@ -1,0 +1,89 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f5f5f5;
+}
+
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+}
+
+#messages {
+    min-height: 200px;
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    background: #fafafa;
+}
+
+.message {
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.bot-message {
+    background: #e3f2fd;
+    border-left: 4px solid #2196f3;
+}
+
+.user-message {
+    background: #f3e5f5;
+    border-left: 4px solid #9c27b0;
+}
+
+#options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+button {
+    padding: 12px;
+    border: none;
+    border-radius: 5px;
+    background: #2196f3;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+button:hover {
+    background: #1976d2;
+}
+
+#ticket-form {
+    margin-top: 20px;
+}
+
+#ticket-form input, #ticket-form textarea, #ticket-form select {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-sizing: border-box;
+    font-size: 14px;
+}
+
+#ticket-form select {
+    background-color: white;
+    cursor: pointer;
+}
+
+#ticket-form textarea {
+    height: 100px;
+    resize: vertical;
+}

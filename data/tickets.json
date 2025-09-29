@@ -1,0 +1,22 @@
+[
+  {
+    "id": 1,
+    "aluno": "LEONARDO CASSEB GOMES",
+    "matricula": "123",
+    "curso": "Ci\u00EAncia da Computa\u00E7\u00E3o",
+    "assunto": "isso aia",
+    "mensagem": "aaaaa",
+    "data": "29/09/2025 18:48",
+    "status": "Pendente"
+  },
+  {
+    "id": 2,
+    "aluno": "LEONARDO CASSEB GOMES",
+    "matricula": "123",
+    "curso": "Ci\u00EAncia da Computa\u00E7\u00E3o",
+    "assunto": "isso ai",
+    "mensagem": "asdwadas",
+    "data": "29/09/2025 19:04",
+    "status": "Pendente"
+  }
+]

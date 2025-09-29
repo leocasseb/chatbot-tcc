@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin - Chatbot</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
+        .section { margin: 30px 0; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        input, button, select, textarea { padding: 10px; margin: 5px; border: 1px solid #ddd; border-radius: 4px; }
+        button { background: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .btn-danger { background: #dc3545; }
+        .btn-danger:hover { background: #c82333; }
+        .btn-success { background: #28a745; }
+        .btn-success:hover { background: #218838; }
+        .item { background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 5px; border-left: 4px solid #007bff; display: flex; justify-content: space-between; align-items: center; }
+        .item-content { flex: 1; }
+        .item-actions { display: flex; gap: 10px; }
+        .form-row { margin: 10px 0; }
+        .form-row input, .form-row select, .form-row textarea { width: 100%; box-sizing: border-box; }
+        .ticket-filter { margin: 10px 0; }
+        .status-pendente { border-left-color: #ffc107; }
+        .status-resolvido { border-left-color: #28a745; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Painel Administrativo</h1>
+
+        <div class="section">
+            <h2>Gerenciar Cursos</h2>
+            <div class="form-row">
+                <input type="text" id="curso-nome" placeholder="Nome do curso">
+            </div>
+            <div class="form-row">
+                <input type="number" id="curso-periodos" placeholder="Quantidade de períodos" min="1" max="12">
+            </div>
+            <button onclick="adicionarCurso()">Adicionar Curso</button>
+            <div id="lista-cursos"></div>
+        </div>
+
+        <div class="section">
+            <h2>Gerenciar Perguntas</h2>
+            <form id="pergunta-form">
+                <input type="hidden" id="pergunta-id">
+                <div class="form-row">
+                    <input type="text" id="pergunta-texto" placeholder="Texto da pergunta">
+                </div>
+            <div class="form-row">
+                <textarea id="pergunta-resposta" placeholder="Resposta (opcional para perguntas pai)" rows="3"></textarea>
+            </div>
+            <div class="form-row">
+                <select id="pergunta-curso" onchange="carregarPeriodos()">
+                    <option value="">Selecione o curso</option>
+                </select>
+            </div>
+            <div class="form-row">
+                <select id="pergunta-periodo">
+                    <option value="">Selecione o período</option>
+                </select>
+            </div>
+            <div class="form-row">
+                <select id="pergunta-pai">
+                    <option value="">Pergunta principal (sem pai)</option>
+                </select>
+            </div>
+            <div class="form-row">
+                <label>
+                    <input type="checkbox" id="pergunta-temporaria"> Resposta temporária
+                </label>
+            </div>
+            <div class="form-row" id="data-expiracao-row" style="display: none;">
+                <input type="date" id="pergunta-expiracao" placeholder="Data de expiração">
+            </div>
+                <button type="button" id="btn-pergunta" onclick="adicionarPergunta()">Adicionar Pergunta</button>
+                <button type="button" id="btn-cancelar-pergunta" onclick="cancelarEdicaoPergunta()" style="display:none">Cancelar</button>
+            </form>
+            <div id="lista-perguntas"></div>
+        </div>
+
+        <div class="section">
+            <h2>Tickets Recebidos</h2>
+            <div class="ticket-filter">
+                <select id="filtro-curso" onchange="carregarTickets()">
+                    <option value="">Todos os cursos</option>
+                </select>
+            </div>
+            <div id="lista-tickets"></div>
+        </div>
+
+        <a href="/">← Voltar ao Chatbot</a>
+    </div>
+
+    <script>
+        // Carregar cursos
+        async function carregarCursos() {
+            try {
+                const response = await fetch('/api/admin/cursos');
+                const cursos = await response.json();
+                
+                const lista = document.getElementById('lista-cursos');
+                lista.innerHTML = '';
+                
+                // Atualizar selects
+                const selectPergunta = document.getElementById('pergunta-curso');
+                const selectFiltro = document.getElementById('filtro-curso');
+                
+                selectPergunta.innerHTML = '<option value="">Selecione o curso</option><option value="Todos">Todos os cursos</option>';
+                selectFiltro.innerHTML = '<option value="">Todos os cursos</option>';
+                
+                cursos.forEach(curso => {
+                    // Lista de cursos
+                    const div = document.createElement('div');
+                    div.className = 'item';
+                    
+                    const content = document.createElement('div');
+                    content.className = 'item-content';
+                    content.textContent = `${curso.nome} - ${curso.periodos} períodos`;
+                    
+                    const actions = document.createElement('div');
+                    actions.className = 'item-actions';
+                    
+                    const btnRemover = document.createElement('button');
+                    btnRemover.textContent = 'Remover';
+                    btnRemover.className = 'btn-danger';
+                    btnRemover.onclick = () => removerCurso(curso.id);
+                    
+                    actions.appendChild(btnRemover);
+                    div.appendChild(content);
+                    div.appendChild(actions);
+                    lista.appendChild(div);
+                    
+                    // Selects
+                    const optionPergunta = document.createElement('option');
+                    optionPergunta.value = curso.nome;
+                    optionPergunta.textContent = curso.nome;
+                    selectPergunta.appendChild(optionPergunta);
+                    
+                    const optionFiltro = document.createElement('option');
+                    optionFiltro.value = curso.nome;
+                    optionFiltro.textContent = curso.nome;
+                    selectFiltro.appendChild(optionFiltro);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar cursos:', error);
+            }
+        }
+
+        // Adicionar curso
+        async function adicionarCurso() {
+            const nome = document.getElementById('curso-nome').value.trim();
+            const periodos = parseInt(document.getElementById('curso-periodos').value);
+            
+            if (!nome || !periodos) {
+                alert('Preencha todos os campos');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/admin/cursos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nome, periodos })
+                });
+
+                if (response.ok) {
+                    document.getElementById('curso-nome').value = '';
+                    document.getElementById('curso-periodos').value = '';
+                    carregarCursos();
+                    alert('Curso adicionado com sucesso!');
+                } else {
+                    alert('Erro ao adicionar curso');
+                }
+            } catch (error) {
+                alert('Erro: ' + error.message);
+            }
+        }
+
+        // Remover curso
+        async function removerCurso(id) {
+            if (!confirm('Tem certeza que deseja remover este curso?')) return;
+
+            try {
+                const response = await fetch(`/api/admin/cursos/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    carregarCursos();
+                    alert('Curso removido com sucesso!');
+                } else {
+                    alert('Erro ao remover curso');
+                }
+            } catch (error) {
+                alert('Erro: ' + error.message);
+            }
+        }
+
+        // Carregar períodos baseado no curso selecionado
+        async function carregarPeriodos() {
+            const cursoNome = document.getElementById('pergunta-curso').value;
+            const periodoSelect = document.getElementById('pergunta-periodo');
+            
+            periodoSelect.innerHTML = '<option value="">Selecione o período</option><option value="Todos">Todos os períodos</option>';
+            
+            if (!cursoNome || cursoNome === 'Todos') return;
+            
+            try {
+                const response = await fetch('/api/admin/cursos');
+                const cursos = await response.json();
+                
+                const curso = cursos.find(c => c.nome === cursoNome);
+                if (curso) {
+                    for (let i = 1; i <= curso.periodos; i++) {
+                        const option = document.createElement('option');
+                        option.value = `${i}º Período`;
+                        option.textContent = `${i}º Período`;
+                        periodoSelect.appendChild(option);
+                    }
+                }
+            } catch (error) {
+                console.error('Erro ao carregar períodos:', error);
+            }
+        }
+
+        // Carregar perguntas
+        async function carregarPerguntas() {
+            try {
+                const response = await fetch('/api/admin/perguntas');
+                const perguntas = await response.json();
+                
+                const lista = document.getElementById('lista-perguntas');
+                lista.innerHTML = '';
+                
+                // Atualizar select de pergunta pai
+                const selectPai = document.getElementById('pergunta-pai');
+                selectPai.innerHTML = '<option value="">Pergunta principal (sem pai)</option>';
+                
+                perguntas.forEach(pergunta => {
+                    // Lista de perguntas
+                    const div = document.createElement('div');
+                    div.className = 'item';
+                    
+                    const content = document.createElement('div');
+                    content.className = 'item-content';
+                    
+                    let infoExtra = '';
+                    if (pergunta.temporaria) {
+                        infoExtra += `<span style="color: orange;">⏰ Temporária</span>`;
+                        if (pergunta.dataExpiracao) {
+                            infoExtra += ` - Expira em: ${pergunta.dataExpiracao}`;
+                        }
+                        infoExtra += '<br>';
+                    }
+                    if (pergunta.perguntaPaiId) {
+                        const pai = perguntas.find(p => p.id === pergunta.perguntaPaiId);
+                        if (pai) {
+                            infoExtra += `<span style="color: blue;">↳ Subpergunta de: ${pai.texto}</span><br>`;
+                        }
+                    }
+                    
+                    const cursoTexto = pergunta.curso === 'Todos' ? 'Todos os cursos' : pergunta.curso;
+                    const periodoTexto = pergunta.periodo === 'Todos' ? 'Todos os períodos' : pergunta.periodo;
+                    
+                    content.innerHTML = `
+                        <strong>${pergunta.texto}</strong><br>
+                        <small>${cursoTexto} - ${periodoTexto}</small><br>
+                        ${infoExtra}
+                        ${pergunta.resposta || '<em>Pergunta pai (sem resposta)</em>'}
+                    `;
+                    
+                    const actions = document.createElement('div');
+                    actions.className = 'item-actions';
+                    
+                    const btnEditar = document.createElement('button');
+                    btnEditar.textContent = 'Editar';
+                    btnEditar.onclick = () => editarPergunta(pergunta.id);
+                    
+                    const btnRemover = document.createElement('button');
+                    btnRemover.textContent = 'Remover';
+                    btnRemover.className = 'btn-danger';
+                    btnRemover.onclick = () => removerPergunta(pergunta.id);
+                    
+                    actions.appendChild(btnEditar);
+                    actions.appendChild(btnRemover);
+                    div.appendChild(content);
+                    div.appendChild(actions);
+                    lista.appendChild(div);
+                    
+                    // Select de pergunta pai (apenas perguntas principais)
+                    if (!pergunta.perguntaPaiId) {
+                        const optionPai = document.createElement('option');
+                        optionPai.value = pergunta.id;
+                        optionPai.textContent = pergunta.texto;
+                        selectPai.appendChild(optionPai);
+                    }
+                });
+            } catch (error) {
+                console.error('Erro ao carregar perguntas:', error);
+            }
+        }
+
+        // Mostrar/ocultar campo de data de expiração
+        document.getElementById('pergunta-temporaria').addEventListener('change', function() {
+            const dataRow = document.getElementById('data-expiracao-row');
+            dataRow.style.display = this.checked ? 'block' : 'none';
+        });
+
+        // Editar pergunta
+        async function editarPergunta(id) {
+            try {
+                const response = await fetch('/api/admin/perguntas');
+                const perguntas = await response.json();
+                const pergunta = perguntas.find(p => p.id === id);
+                
+                if (pergunta) {
+                    document.getElementById('pergunta-id').value = id;
+                    document.getElementById('pergunta-texto').value = pergunta.texto;
+                    document.getElementById('pergunta-resposta').value = pergunta.resposta || '';
+                    document.getElementById('pergunta-curso').value = pergunta.curso;
+                    
+                    await carregarPeriodos();
+                    document.getElementById('pergunta-periodo').value = pergunta.periodo;
+                    
+                    if (pergunta.perguntaPaiId) {
+                        document.getElementById('pergunta-pai').value = pergunta.perguntaPaiId;
+                    }
+                    
+                    document.getElementById('pergunta-temporaria').checked = pergunta.temporaria;
+                    if (pergunta.temporaria && pergunta.dataExpiracao) {
+                        const dataFormatada = pergunta.dataExpiracao.split('/').reverse().join('-');
+                        document.getElementById('pergunta-expiracao').value = dataFormatada;
+                        document.getElementById('data-expiracao-row').style.display = 'block';
+                    }
+                    
+                    document.getElementById('btn-pergunta').textContent = 'Atualizar Pergunta';
+                    document.getElementById('btn-cancelar-pergunta').style.display = 'inline';
+                }
+            } catch (error) {
+                alert('Erro ao carregar pergunta: ' + error.message);
+            }
+        }
+
+        function cancelarEdicaoPergunta() {
+            document.getElementById('pergunta-form').reset();
+            document.getElementById('pergunta-id').value = '';
+            document.getElementById('btn-pergunta').textContent = 'Adicionar Pergunta';
+            document.getElementById('btn-cancelar-pergunta').style.display = 'none';
+            document.getElementById('data-expiracao-row').style.display = 'none';
+        }
+
+        // Adicionar pergunta
+        async function adicionarPergunta() {
+            const texto = document.getElementById('pergunta-texto').value.trim();
+            const resposta = document.getElementById('pergunta-resposta').value.trim();
+            const curso = document.getElementById('pergunta-curso').value;
+            const periodo = document.getElementById('pergunta-periodo').value;
+            const perguntaPaiId = document.getElementById('pergunta-pai').value;
+            const temporaria = document.getElementById('pergunta-temporaria').checked;
+            const dataExpiracao = document.getElementById('pergunta-expiracao').value;
+            const editandoId = document.getElementById('pergunta-id').value;
+            
+            if (!texto || !curso || !periodo) {
+                alert('Preencha texto, curso e período');
+                return;
+            }
+            
+            if (resposta && temporaria && !dataExpiracao) {
+                alert('Para respostas temporárias, defina a data de expiração');
+                return;
+            }
+
+            const pergunta = {
+                texto, resposta, curso, periodo,
+                perguntaPaiId: perguntaPaiId ? parseInt(perguntaPaiId) : null,
+                temporaria,
+                dataExpiracao: temporaria ? dataExpiracao.split('-').reverse().join('/') : null
+            };
+
+            const isEdit = editandoId !== '';
+            const url = isEdit ? `/api/admin/perguntas/${editandoId}` : '/api/admin/perguntas';
+            const method = isEdit ? 'PUT' : 'POST';
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(pergunta)
+                });
+
+                if (response.ok) {
+                    cancelarEdicaoPergunta();
+                    carregarPerguntas();
+                    alert(isEdit ? 'Pergunta atualizada!' : 'Pergunta adicionada!');
+                } else {
+                    alert('Erro ao salvar pergunta');
+                }
+            } catch (error) {
+                alert('Erro: ' + error.message);
+            }
+        }
+
+        // Remover pergunta
+        async function removerPergunta(id) {
+            if (!confirm('Tem certeza que deseja remover esta pergunta?')) return;
+
+            try {
+                const response = await fetch(`/api/admin/perguntas/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    carregarPerguntas();
+                    alert('Pergunta removida com sucesso!');
+                } else {
+                    alert('Erro ao remover pergunta');
+                }
+            } catch (error) {
+                alert('Erro: ' + error.message);
+            }
+        }
+
+        // Carregar tickets
+        async function carregarTickets() {
+            try {
+                const response = await fetch('/api/admin/tickets');
+                const tickets = await response.json();
+                
+                const filtro = document.getElementById('filtro-curso').value;
+                const ticketsFiltrados = filtro ? tickets.filter(t => t.curso === filtro) : tickets;
+                
+                const lista = document.getElementById('lista-tickets');
+                lista.innerHTML = '';
+                
+                if (ticketsFiltrados.length === 0) {
+                    lista.innerHTML = '<p>Nenhum ticket encontrado.</p>';
+                    return;
+                }
+                
+                ticketsFiltrados.forEach(ticket => {
+                    const div = document.createElement('div');
+                    div.className = `item status-${ticket.status.toLowerCase()}`;
+                    
+                    const content = document.createElement('div');
+                    content.className = 'item-content';
+                    const tipoTicket = ticket.anonimo ? '<span style="color: orange;">[ANÔNIMO]</span>' : '';
+                    const emailInfo = ticket.anonimo ? '' : `<p><strong>Email:</strong> ${ticket.email}</p>`;
+                    
+                    content.innerHTML = `
+                        <h4>Ticket #${ticket.id} - ${ticket.assunto} ${tipoTicket}</h4>
+                        <p><strong>Aluno:</strong> ${ticket.aluno}</p>
+                        <p><strong>Matrícula:</strong> ${ticket.matricula}</p>
+                        ${emailInfo}
+                        <p><strong>Curso:</strong> ${ticket.curso}</p>
+                        <p><strong>Mensagem:</strong> ${ticket.mensagem}</p>
+                        <p><strong>Data:</strong> ${ticket.data}</p>
+                        <p><strong>Status:</strong> ${ticket.status}</p>
+                    `;
+                    
+                    const actions = document.createElement('div');
+                    actions.className = 'item-actions';
+                    
+                    if (ticket.status === 'Pendente') {
+                        const btnResolver = document.createElement('button');
+                        btnResolver.textContent = 'Marcar Resolvido';
+                        btnResolver.className = 'btn-success';
+                        btnResolver.onclick = () => resolverTicket(ticket.id);
+                        actions.appendChild(btnResolver);
+                    }
+                    
+                    const btnRemover = document.createElement('button');
+                    btnRemover.textContent = 'Remover';
+                    btnRemover.className = 'btn-danger';
+                    btnRemover.onclick = () => removerTicket(ticket.id);
+                    
+                    actions.appendChild(btnRemover);
+                    div.appendChild(content);
+                    div.appendChild(actions);
+                    lista.appendChild(div);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar tickets:', error);
+            }
+        }
+
+        // Resolver ticket
+        async function resolverTicket(id) {
+            try {
+                const response = await fetch(`/api/admin/tickets/${id}/resolver`, {
+                    method: 'PUT'
+                });
+
+                if (response.ok) {
+                    carregarTickets();
+                    alert('Ticket marcado como resolvido!');
+                } else {
+                    alert('Erro ao resolver ticket');
+                }
+            } catch (error) {
+                alert('Erro: ' + error.message);
+            }
+        }
+
+        // Remover ticket
+        async function removerTicket(id) {
+            if (!confirm('Tem certeza que deseja remover este ticket?')) return;
+
+            try {
+                const response = await fetch(`/api/admin/tickets/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    carregarTickets();
+                    alert('Ticket removido com sucesso!');
+                } else {
+                    alert('Erro ao remover ticket');
+                }
+            } catch (error) {
+                alert('Erro: ' + error.message);
+            }
+        }
+
+        // Carregar dados ao iniciar
+        window.onload = () => {
+            carregarCursos();
+            carregarPerguntas();
+            carregarTickets();
+        };
+    </script>
+</body>
+</html>
