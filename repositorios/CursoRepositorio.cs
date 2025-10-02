@@ -32,7 +32,7 @@ public class CursoRepositorio
 
     public List<Curso> Listar() => cursos;
 
-    public Curso? Obter(int id) => cursos.FirstOrDefault(c => c.id == id);
+    public Curso Obter(int id) => cursos.FirstOrDefault(c => c.id == id);
 
     public void Adicionar(Curso curso)
     {

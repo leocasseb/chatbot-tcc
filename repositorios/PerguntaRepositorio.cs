@@ -27,7 +27,7 @@ public class PerguntaRepositorio
         return perguntas;
     }
 
-    public Pergunta? ObterPorId(int id) 
+    public Pergunta ObterPorId(int id) 
     {
         RemoverExpiradas();
         return perguntas.FirstOrDefault(p => p.id == id);

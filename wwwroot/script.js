@@ -78,8 +78,6 @@ async function selecionarPeriodo(curso) {
     }
 }
 
-
-
 async function mostrarPerguntas(periodo) {
     periodoSelecionado = periodo;
     adicionarMensagem(periodo, 'user');
@@ -99,7 +97,7 @@ async function mostrarPerguntas(periodo) {
         }
         
         perguntas.forEach(pergunta => {
-            options.appendChild(criarBotao(pergunta.texto, () => mostrarResposta(pergunta.id, pergunta.texto)));
+            options.appendChild(criarBotao(pergunta.texto, () => navegarPergunta(pergunta.id, pergunta.texto)));
         });
         
         options.appendChild(criarBotao('Voltar', () => selecionarPeriodo(cursoSelecionado)));
@@ -108,25 +106,67 @@ async function mostrarPerguntas(periodo) {
     }
 }
 
-async function mostrarResposta(perguntaId, perguntaTexto) {
+async function navegarPergunta(perguntaId, perguntaTexto, perguntaPaiId = null) {
     adicionarMensagem(perguntaTexto, 'user');
     
     try {
-        const response = await fetch(`/api/chatbot/resposta/${perguntaId}`);
-        const data = await response.json();
+        // Buscar a pergunta atual
+        const perguntaResponse = await fetch(`/api/chatbot/pergunta/${perguntaId}`);
         
-        adicionarMensagem(data.resposta, 'bot');
+        if (!perguntaResponse.ok) {
+            throw new Error(`Erro ${perguntaResponse.status}`);
+        }
+        
+        const pergunta = await perguntaResponse.json();
+        
+        // Buscar subperguntas
+        const subResponse = await fetch(`/api/chatbot/subperguntas/${perguntaId}`);
+        const subperguntas = await subResponse.json();
         
         limparOpcoes();
         const options = document.getElementById('options');
         
-        options.appendChild(criarBotao('Fazer outra pergunta', () => mostrarPerguntas(periodoSelecionado)));
+        // Se tem resposta, mostrar
+        if (pergunta.resposta && pergunta.resposta.trim() !== '') {
+            adicionarMensagem(pergunta.resposta, 'bot');
+        }
+        
+        // Se tem subperguntas, mostrar como opções
+        if (subperguntas.length > 0) {
+            if (pergunta.resposta && pergunta.resposta.trim() !== '') {
+                adicionarMensagem('Você também pode ver:', 'bot');
+            } else {
+                adicionarMensagem('Escolha uma opção:', 'bot');
+            }
+            
+            subperguntas.forEach(sub => {
+                options.appendChild(criarBotao(sub.texto, () => navegarPergunta(sub.id, sub.texto, perguntaId)));
+            });
+        } else if (!pergunta.resposta || pergunta.resposta.trim() === '') {
+            adicionarMensagem('Esta seção não possui conteúdo disponível.', 'bot');
+        }
+        
+        // Botões de navegação
+        if (pergunta.perguntaPaiId) {
+            // Se tem pai, buscar dados do pai para voltar
+            const paiResponse = await fetch(`/api/chatbot/pergunta/${pergunta.perguntaPaiId}`);
+            const pai = await paiResponse.json();
+            options.appendChild(criarBotao('Voltar', () => navegarPergunta(pai.id, pai.texto, pai.perguntaPaiId)));
+        } else {
+            // Se é pergunta principal, voltar para lista de perguntas
+            options.appendChild(criarBotao('Outras perguntas', () => mostrarPerguntas(periodoSelecionado)));
+        }
+        
         options.appendChild(criarBotao('Menu principal', mostrarMenuPrincipal));
         
     } catch (error) {
-        adicionarMensagem('Erro ao obter resposta. Tente novamente.', 'bot');
+        console.error('Erro detalhado:', error);
+        adicionarMensagem(`Erro ao carregar pergunta: ${error.message}`, 'bot');
+        mostrarPerguntas(periodoSelecionado);
     }
 }
+
+
 
 async function mostrarFormularioTicket() {
     adicionarMensagem('Enviar ticket/dúvida', 'user');

@@ -43,19 +43,30 @@ namespace ChatbotAPI.Controllers
             var perguntaRepo = new PerguntaRepositorio();
             var todasPerguntas = perguntaRepo.Listar();
             
-            // Filtrar perguntas que correspondem ao curso e período
+            // Filtrar apenas perguntas principais (sem pai)
             var perguntas = todasPerguntas.Where(p => 
                 (p.curso == curso || p.curso == "Todos") &&
                 (p.periodo == periodo || p.periodo == "Todos") &&
-                !p.perguntaPaiId.HasValue && // Apenas perguntas principais
-                !string.IsNullOrEmpty(p.resposta) // Apenas com resposta
+                !p.perguntaPaiId.HasValue // Apenas perguntas principais
             ).ToList();
             
             return Ok(perguntas);
         }
 
-        [HttpGet("resposta/{id}")]
-        public IActionResult GetResposta(int id)
+        [HttpGet("subperguntas/{perguntaPaiId}")]
+        public IActionResult GetSubperguntas(int perguntaPaiId)
+        {
+            var perguntaRepo = new PerguntaRepositorio();
+            var todasPerguntas = perguntaRepo.Listar();
+            
+            // Buscar subperguntas da pergunta pai
+            var subperguntas = todasPerguntas.Where(p => p.perguntaPaiId == perguntaPaiId).ToList();
+            
+            return Ok(subperguntas);
+        }
+
+        [HttpGet("pergunta/{id}")]
+        public IActionResult GetPergunta(int id)
         {
             var perguntaRepo = new PerguntaRepositorio();
             var pergunta = perguntaRepo.ObterPorId(id);
@@ -63,8 +74,10 @@ namespace ChatbotAPI.Controllers
             if (pergunta == null)
                 return NotFound();
                 
-            return Ok(new { resposta = pergunta.resposta });
+            return Ok(pergunta);
         }
+
+
 
         [HttpPost("ticket")]
         public IActionResult PostTicket([FromBody] Ticket ticket)
