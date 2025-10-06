@@ -3,7 +3,7 @@ using ChatbotAPI.Models;
 
 public class TicketRepositorio
 {
-    private readonly string arquivo = "data/tickets.json";
+    private readonly string arquivo = Path.Combine(Path.GetTempPath(), "chatbot-data", "tickets.json");
     private List<Ticket> tickets;
 
     public TicketRepositorio()

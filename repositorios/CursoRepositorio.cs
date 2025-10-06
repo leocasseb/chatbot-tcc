@@ -3,7 +3,7 @@ using ChatbotAPI.Models;
 
 public class CursoRepositorio
 {
-    private readonly string arquivo = "data/cursos.json";
+    private readonly string arquivo = Path.Combine(Path.GetTempPath(), "chatbot-data", "cursos.json");
     private List<Curso> cursos;
 
     public CursoRepositorio()
