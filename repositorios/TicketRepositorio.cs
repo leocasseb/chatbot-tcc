@@ -32,8 +32,11 @@ public class TicketRepositorio
 
     public void Remover(int id)
     {
-        tickets.RemoveAll(t => t.id == id);
-        Salvar();
+        var removidos = tickets.RemoveAll(t => t.id == id);
+        if (removidos > 0)
+        {
+            Salvar();
+        }
     }
 
     public void MarcarResolvido(int id)
@@ -48,7 +51,15 @@ public class TicketRepositorio
 
     private void Salvar()
     {
-        var json = JsonSerializer.Serialize(tickets, new JsonSerializerOptions { WriteIndented = true });
-        File.WriteAllText(arquivo, json);
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(arquivo) ?? Path.GetTempPath());
+            var json = JsonSerializer.Serialize(tickets, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(arquivo, json);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro ao salvar tickets: {ex.Message}");
+        }
     }
 }
