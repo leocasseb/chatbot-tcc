@@ -18,15 +18,13 @@ public class CursoRepositorio
             }
             else
             {
-
-                cursos = new List<Curso>();
+                cursos = CriarDadosIniciais();
                 Salvar();
             }
         }
         catch (Exception)
         {
-
-            cursos = new List<Curso>();
+            cursos = CriarDadosIniciais();
         }
     }
 
@@ -51,5 +49,15 @@ public class CursoRepositorio
     {
         var json = JsonSerializer.Serialize(cursos, new JsonSerializerOptions { WriteIndented = true });
         File.WriteAllText(arquivo, json);
+    }
+
+    private List<Curso> CriarDadosIniciais()
+    {
+        return new List<Curso>
+        {
+            new Curso { id = 1, nome = "Ciência da Computação", periodos = 8 },
+            new Curso { id = 2, nome = "Engenharia de Software", periodos = 8 },
+            new Curso { id = 3, nome = "Sistemas de Informação", periodos = 8 }
+        };
     }
 }

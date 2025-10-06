@@ -16,7 +16,7 @@ public class PerguntaRepositorio
         }
         else
         {
-            perguntas = new List<Pergunta>();
+            perguntas = CriarDadosIniciais();
             Salvar();
         }
     }
@@ -89,5 +89,19 @@ public class PerguntaRepositorio
     {
         var json = JsonSerializer.Serialize(perguntas, new JsonSerializerOptions { WriteIndented = true });
         File.WriteAllText(arquivo, json);
+    }
+
+    private List<Pergunta> CriarDadosIniciais()
+    {
+        return new List<Pergunta>
+        {
+            new Pergunta { id = 1, texto = "Informações Gerais", curso = "Todos", periodo = "Todos", subPerguntasIds = new List<int> { 2, 3, 4 } },
+            new Pergunta { id = 2, texto = "Horário de funcionamento da biblioteca", resposta = "A biblioteca funciona de segunda a sexta das 8h às 22h, e aos sábados das 8h às 17h.", curso = "Todos", periodo = "Todos", perguntaPaiId = 1 },
+            new Pergunta { id = 3, texto = "Localização da secretaria", resposta = "A secretaria fica no térreo do prédio principal, sala 101.", curso = "Todos", periodo = "Todos", perguntaPaiId = 1 },
+            new Pergunta { id = 4, texto = "Como solicitar histórico escolar", resposta = "Você pode solicitar o histórico na secretaria ou pelo portal do aluno online.", curso = "Todos", periodo = "Todos", perguntaPaiId = 1 },
+            new Pergunta { id = 5, texto = "Informações do Curso", curso = "Ciência da Computação", periodo = "Todos", subPerguntasIds = new List<int> { 6, 7 } },
+            new Pergunta { id = 6, texto = "Localização das salas de aula", resposta = "As aulas de Ciência da Computação acontecem no 2º andar, salas 201 a 210.", curso = "Ciência da Computação", periodo = "Todos", perguntaPaiId = 5 },
+            new Pergunta { id = 7, texto = "Laboratório de informática", resposta = "O laboratório fica na sala 205, disponível das 7h às 22h.", curso = "Ciência da Computação", periodo = "Todos", perguntaPaiId = 5 }
+        };
     }
 }
