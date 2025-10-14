@@ -22,11 +22,25 @@
         .ticket-filter { margin: 10px 0; }
         .status-pendente { border-left-color: #ffc107; }
         .status-resolvido { border-left-color: #28a745; }
+        
+        /* Tema Escuro */
+        body.dark-theme { background: #121212; color: #e0e0e0; }
+        body.dark-theme .container { background: #1e1e1e; }
+        body.dark-theme .section { border-color: #333; background: #2a2a2a; }
+        body.dark-theme input, body.dark-theme select, body.dark-theme textarea { background: #333; color: #e0e0e0; border-color: #555; }
+        body.dark-theme .item { background: #2a2a2a; }
+        body.dark-theme button { background: #0d6efd; }
+        body.dark-theme button:hover { background: #0b5ed7; }
+        body.dark-theme .btn-danger { background: #dc3545; }
+        body.dark-theme .btn-danger:hover { background: #c82333; }
+        body.dark-theme .btn-success { background: #198754; }
+        body.dark-theme .btn-success:hover { background: #157347; }
     </style>
 </head>
 <body>
     <div class="container">
         <div style="text-align: right; margin-bottom: 10px;">
+            <button id="theme-toggle" onclick="toggleTheme()" style="background: #6c757d; color: white; padding: 8px 16px; border: none; border-radius: 4px; margin-right: 10px; cursor: pointer;" title="Alternar tema para acessibilidade">🌙 Tema Escuro</button>
             <a href="/" style="background: #28a745; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px;">Chatbot</a>
         </div>
         <h1>Painel Administrativo</h1>
@@ -37,7 +51,7 @@
                 <input type="text" id="curso-nome" placeholder="Nome do curso">
             </div>
             <div class="form-row">
-                <input type="number" id="curso-periodos" placeholder="Quantidade de períodos" min="1" max="12">
+                <input type="number" id="curso-periodos" placeholder="Quantidade de períodos" min="1" max="20">
             </div>
             <button onclick="adicionarCurso()">Adicionar Curso</button>
             <div id="lista-cursos"></div>
@@ -159,6 +173,11 @@
                 alert('Preencha todos os campos');
                 return;
             }
+            
+            if (periodos > 20) {
+                alert('O curso não pode ter mais de 20 períodos');
+                return;
+            }
 
             try {
                 const response = await fetch('/api/admin/cursos', {
@@ -173,7 +192,8 @@
                     carregarCursos();
                     alert('Curso adicionado com sucesso!');
                 } else {
-                    alert('Erro ao adicionar curso');
+                    const errorData = await response.json();
+                    alert(errorData.erro || 'Erro ao adicionar curso');
                 }
             } catch (error) {
                 alert('Erro: ' + error.message);
@@ -525,8 +545,34 @@
             }
         }
 
+        // Função para alternar tema
+        function toggleTheme() {
+            const body = document.body;
+            const themeButton = document.getElementById('theme-toggle');
+            
+            body.classList.toggle('dark-theme');
+            
+            if (body.classList.contains('dark-theme')) {
+                themeButton.innerHTML = '☀️ Tema Claro';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                themeButton.innerHTML = '🌙 Tema Escuro';
+                localStorage.setItem('theme', 'light');
+            }
+        }
+        
+        // Carregar tema salvo
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-theme');
+                document.getElementById('theme-toggle').innerHTML = '☀️ Tema Claro';
+            }
+        }
+
         // Carregar dados ao iniciar
         window.onload = () => {
+            loadTheme();
             carregarCursos();
             carregarPerguntas();
             carregarTickets();

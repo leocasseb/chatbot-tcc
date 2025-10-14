@@ -36,6 +36,11 @@ namespace ChatbotAPI.Controllers
         [HttpPost("cursos")]
         public IActionResult PostCurso([FromBody] Curso curso)
         {
+            if (curso.periodos > 20)
+            {
+                return BadRequest(new { erro = "O curso não pode ter mais de 20 períodos" });
+            }
+            
             cursoRepo.Adicionar(curso);
             return Ok(new { sucesso = true });
         }

@@ -9,6 +9,7 @@
 <body>
     <div class="container">
         <div style="text-align: right; margin-bottom: 10px;">
+            <button id="theme-toggle" onclick="toggleTheme()" style="background: #6c757d; color: white; padding: 8px 16px; border: none; border-radius: 4px; margin-right: 10px; cursor: pointer;" title="Alternar tema para acessibilidade">🌙 Tema Escuro</button>
             <a href="/admin.html" style="background: #007bff; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px;">Admin</a>
         </div>
         <h1>Chatbot Informativo</h1>
@@ -36,5 +37,34 @@
         </div>
     </div>
     <script src="script.js?v=2"></script>
+    <script>
+        // Função para alternar tema
+        function toggleTheme() {
+            const body = document.body;
+            const themeButton = document.getElementById('theme-toggle');
+            
+            body.classList.toggle('dark-theme');
+            
+            if (body.classList.contains('dark-theme')) {
+                themeButton.innerHTML = '☀️ Tema Claro';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                themeButton.innerHTML = '🌙 Tema Escuro';
+                localStorage.setItem('theme', 'light');
+            }
+        }
+        
+        // Carregar tema salvo
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-theme');
+                document.getElementById('theme-toggle').innerHTML = '☀️ Tema Claro';
+            }
+        }
+        
+        // Carregar tema ao iniciar
+        document.addEventListener('DOMContentLoaded', loadTheme);
+    </script>
 </body>
 </html>
